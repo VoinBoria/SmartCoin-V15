@@ -1,0 +1,9 @@
+<resources>
+    <!-- Тема для Splash Screen -->
+    <style name="SplashTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+
+    <!-- Основна тема додатка -->
+    <style name="Theme.HomeAccountingApp" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

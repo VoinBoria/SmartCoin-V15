@@ -1,0 +1,11 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Фон (можна змінити колір або використовувати інші зображення) -->
+    <item android:drawable="@color/white" />
+
+    <!-- Картинка Splash Screen -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_image" />
+    </item>
+</layer-list>

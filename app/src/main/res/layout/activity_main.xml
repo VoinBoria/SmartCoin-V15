@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Загальний текст витрат -->
+    <TextView
+        android:id="@+id/totalExpenseTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Загальні витрати: $0.00"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp" />
+
+    <!-- Текст витрат по категоріях -->
+    <TextView
+        android:id="@+id/categoryTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Витрати по категоріях:"
+        android:textSize="16sp"
+        android:paddingBottom="8dp" />
+
+</LinearLayout>
