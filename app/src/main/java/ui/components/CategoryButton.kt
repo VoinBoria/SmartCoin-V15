@@ -1,4 +1,4 @@
-package com.example.homeaccountingapp.ui.components
+package com.serhio.homeaccountingapp.ui.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
