@@ -188,13 +188,21 @@ class MainActivity : ComponentActivity() {
         } else {
             Box {
                 // Додайте контейнер для нативної реклами зверху
-                NativeAdContainer(nativeAd = nativeAd, modifier = Modifier.align(Alignment.TopCenter))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                        .background(Color.White)
+                        .zIndex(1f) // Встановіть високий zIndex для відображення поверх основного контенту
+                ) {
+                    NativeAdContainer(nativeAd = nativeAd)
+                }
 
                 // Основний контент додатка
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 250.dp) // Відступ для банера
+                        .zIndex(0f) // Встановіть нижчий zIndex для основного контенту
                 ) {
                     MainScreen(
                         onNavigateToMainActivity = {
