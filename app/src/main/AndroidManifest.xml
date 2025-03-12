@@ -22,10 +22,10 @@
         android:theme="@style/Theme.HomeAccountingApp"
         tools:targetApi="31">
 
-        <!-- Додайте цей блок для ініціалізації AdMob -->
+        <!-- Ініціалізація AdMob -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-4210607951563182~4589971958"/> <!-- Ваш APPLICATION_ID -->
+            android:value="ca-app-pub-4210607951563182~9691352876"/> <!-- Ваш APPLICATION_ID -->
 
         <!-- MainActivity з темою заставки -->
         <activity
@@ -38,6 +38,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <!-- Додаткові активності -->
         <activity android:name=".IncomeActivity" />
         <activity android:name=".ExpenseActivity" />
