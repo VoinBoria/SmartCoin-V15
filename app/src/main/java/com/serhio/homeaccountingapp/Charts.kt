@@ -1,6 +1,7 @@
 package com.serhio.homeaccountingapp
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalPagerApi::class)
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -119,14 +121,18 @@ fun IncomeExpenseChart(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         if (page == 0) {
+                            val sortedIncomes = incomes.toList().sortedByDescending { (_, amount) -> amount }.toMap()
                             LegendColumn(
-                                items = incomes.keys.toList(),
+                                items = sortedIncomes.keys.toList(),
                                 colors = incomeColors,
+                                values = sortedIncomes.values.toList(), // Передаємо значення доходів
+                                totalAmount = totalIncomes, // Передаємо загальну суму доходів
                                 maxHeight = chartSize,
-                                modifier = Modifier.padding(end = padding)
+                                modifier = Modifier.padding(end = padding),
+                                ascending = false // Сортування у спадному порядку
                             )
                             GradientDonutChart(
-                                values = incomes.values.toList(),
+                                values = sortedIncomes.values.toList(),
                                 maxAmount = totalIncomes,
                                 chartSize = chartSize,
                                 colors = incomeColors,
@@ -136,15 +142,19 @@ fun IncomeExpenseChart(
                                 modifier = Modifier.padding(start = padding)
                             )
                         } else {
+                            val sortedExpenses = expenses.toList().sortedBy { (_, amount) -> amount }.toMap()
                             LegendColumn(
-                                items = expenses.keys.toList(),
+                                items = sortedExpenses.keys.toList(),
                                 colors = expenseColors,
+                                values = sortedExpenses.values.toList(), // Передаємо значення витрат
+                                totalAmount = totalExpenses.absoluteValue, // Передаємо загальну суму витрат
                                 maxHeight = chartSize,
-                                modifier = Modifier.padding(end = padding)
+                                modifier = Modifier.padding(end = padding),
+                                ascending = true // Сортування у зростаючому порядку
                             )
                             GradientDonutChart(
-                                values = expenses.values.toList(),
-                                maxAmount = totalExpenses,
+                                values = sortedExpenses.values.toList(),
+                                maxAmount = totalExpenses.absoluteValue, // Використовуємо абсолютне значення загальної суми витрат
                                 chartSize = chartSize,
                                 colors = expenseColors,
                                 strokeWidth = strokeWidth,
@@ -168,14 +178,25 @@ fun IncomeExpenseChart(
         }
     }
 }
-
 @Composable
 fun LegendColumn(
     items: List<String>,
     colors: List<Color>,
+    values: List<Double>, // Додаємо параметр для значень
+    totalAmount: Double, // Додаємо параметр для загальної суми
     maxHeight: Dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    ascending: Boolean = true // Прапорець для сортування в порядку зростання або спадання
 ) {
+    // Сортуємо категорії та значення у порядку зростання або спадання залежно від прапорця
+    val sortedItemsWithValues = if (ascending) {
+        items.zip(values).sortedBy { it.second }
+    } else {
+        items.zip(values).sortedByDescending { it.second }
+    }
+    val sortedItems = sortedItemsWithValues.map { it.first }
+    val sortedValues = sortedItemsWithValues.map { it.second }
+
     Column(
         modifier = modifier
             .height(maxHeight)
@@ -183,7 +204,14 @@ fun LegendColumn(
             .width(150.dp), // Встановлюємо фіксовану ширину для легенди
         horizontalAlignment = Alignment.Start
     ) {
-        items.forEachIndexed { index, category ->
+        sortedItems.forEachIndexed { index, category ->
+            val value = sortedValues.getOrElse(index) { 0.0 }
+            val percentage = if (totalAmount > 0) {
+                (value / totalAmount * 100).toInt()
+            } else {
+                0
+            }
+            Log.d("LegendColumn", "Category: $category, Value: $value, Total: $totalAmount, Percentage: $percentage%") // Додано журналювання
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(vertical = 4.dp)
@@ -192,17 +220,17 @@ fun LegendColumn(
                     modifier = Modifier
                         .size(12.dp)
                         .background(
-                            color = colors[index],
+                            color = colors.getOrElse(index) { colors.last() }, // Використання кольору за замовчуванням, якщо індекс виходить за межі
                             shape = CircleShape
                         )
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = category,
+                    text = "$category ($percentage%)", // Додаємо відсоток до категорії
                     color = Color.White,
                     fontSize = 14.sp,
                     maxLines = 2,
-                    softWrap = true, // Додаємо параметр для переносу тексту
+                    softWrap = true,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -210,6 +238,7 @@ fun LegendColumn(
         Box(modifier = Modifier.height(16.dp)) // Додаємо відступ знизу, щоб уникнути обрізання кольорової крапки
     }
 }
+
 @Composable
 fun GradientDonutChart(
     values: List<Double>,
@@ -243,7 +272,7 @@ fun GradientDonutChart(
                 )
                 // Сегмент
                 drawArc(
-                    color = colors[i],
+                    color = colors.getOrElse(i) { colors.last() }, // Виправлено: використання кольору за замовчуванням, якщо індекс виходить за межі
                     startAngle = startAngle + gapSize,
                     sweepAngle = sweepAngles[i] - gapSize,
                     useCenter = false,
@@ -263,7 +292,6 @@ fun GradientDonutChart(
         }
     }
 }
-
 
 fun generateDistinctColors(count: Int, excludeRed: Boolean = false, excludeGreen: Boolean = false): List<Color> {
     val predefinedColors = listOf(
@@ -286,7 +314,15 @@ fun generateDistinctColors(count: Int, excludeRed: Boolean = false, excludeGreen
         Color(0xFF808000), // olive
         Color(0xFFffd8b1), // coral
         Color(0xFF000075), // navy
-        Color(0xFFa9a9a9)  // gray
+        Color(0xFFa9a9a9),  // gray
+        Color(0xFF000000), // black
+        Color(0xFF808080), // dark gray
+        Color(0xFFB0E0E6), // powder blue
+        Color(0xFF800080), // dark purple
+        Color(0xFF008080), // dark cyan
+        Color(0xFF00FF00), // bright green
+        Color(0xFFFFD700), // gold
+        Color(0xFF8B4513)  // saddle brown
     )
 
     val filteredColors = predefinedColors.filter {
@@ -295,7 +331,6 @@ fun generateDistinctColors(count: Int, excludeRed: Boolean = false, excludeGreen
 
     return List(count) { filteredColors[it % filteredColors.size] }
 }
-
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun ExpandableButtonWithAmount(
