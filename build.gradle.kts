@@ -12,8 +12,8 @@ android {
         applicationId = "com.serhio.homeaccountingapp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 13
-        versionName = "13.0"
+        versionCode = 12
+        versionName = "12.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -67,7 +67,7 @@ dependencies {
     // Jetpack Compose Libraries
     implementation("androidx.compose.ui:ui:1.5.1")
     implementation("androidx.compose.foundation:foundation:1.7.8")
-    implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.compose.material3:material3:1.2.0") // Повертаємо старішу версію
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
