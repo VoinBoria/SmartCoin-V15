@@ -66,31 +66,31 @@ dependencies {
 
     // Jetpack Compose Libraries
     implementation("androidx.compose.ui:ui:1.5.1")
-    implementation("androidx.compose.foundation:foundation:1.5.1")
-    implementation("androidx.compose.material3:material3:1.2.0")
-    implementation("androidx.compose.material:material-icons-extended:1.5.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation("androidx.compose.foundation:foundation:1.7.8")
+    implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.compose.ui:ui-tooling-preview")
 
     // LiveData integration with Compose
-    implementation("androidx.compose.runtime:runtime-livedata:1.5.1")
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
+    implementation("androidx.datastore:datastore-preferences:1.1.3")
 
     // Navigation Component
-    implementation("androidx.navigation:navigation-compose:2.6.0")
+    implementation("androidx.navigation:navigation-compose:2.8.9")
 
     // Material Design
-    implementation("com.google.android.material:material:1.9.0")
+    implementation("com.google.android.material:material:1.12.0")
 
     // MPAndroidChart
     implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
 
     // Gson
-    implementation("com.google.code.gson:gson:2.10")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Accompanist Pager
-    implementation("com.google.accompanist:accompanist-pager:0.25.0")
+    implementation("com.google.accompanist:accompanist-pager:0.25.1")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.25.0")
 
     // Debug Tools
@@ -101,7 +101,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.5.1")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.8")
 
     // Material Dialogs Library
     implementation("io.github.vanpra.compose-material-dialogs:datetime:0.9.0")
@@ -110,6 +110,5 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.8.0")
 
     // AdMob SDK
-    implementation("com.google.android.gms:play-services-ads:24.0.0")
-
+    implementation("com.google.android.gms:play-services-ads:24.1.0")
 }
