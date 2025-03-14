@@ -9,8 +9,6 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -69,28 +67,16 @@ import kotlinx.coroutines.Dispatchers
 import java.util.Locale
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.AdSize
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdOptions
-import com.google.android.gms.ads.AdLoader
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.nativead.MediaView
-import com.google.android.gms.ads.nativead.NativeAdView
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var updateReceiver: BroadcastReceiver
-    private lateinit var adLoader: AdLoader
-    private var nativeAd: NativeAd? = null
+    private lateinit var adView: AdView
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,6 +89,15 @@ class MainActivity : ComponentActivity() {
         // Ініціалізація AdMob SDK
         MobileAds.initialize(this) {}
 
+        // Налаштування AdView
+        adView = AdView(this).apply {
+            adUnitId = "ca-app-pub-4210607951563182/9691352876" // Ваш Ad Unit ID
+            setAdSize(AdSize.BANNER)
+        }
+
+        val adRequest = AdRequest.Builder().build()
+        adView.loadAd(adRequest)
+
         // Використовуйте новий API для керування вікном
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
@@ -111,9 +106,6 @@ class MainActivity : ComponentActivity() {
 
         // Перевірка та оновлення категорій при запуску
         updateCategoriesIfNeeded()
-
-        // Налаштування нативної реклами
-        setupNativeAd()
 
         setContent {
             HomeAccountingAppTheme {
@@ -138,31 +130,9 @@ class MainActivity : ComponentActivity() {
         LocalBroadcastManager.getInstance(this).registerReceiver(updateReceiver, filter)
     }
 
-    private fun setupNativeAd() {
-        adLoader = AdLoader.Builder(this, "ca-app-pub-3940256099942544/2247696110")
-            .forNativeAd { ad: NativeAd ->
-                if (isDestroyed) {
-                    ad.destroy()
-                    return@forNativeAd
-                }
-                nativeAd?.destroy()
-                nativeAd = ad
-            }
-            .withAdListener(object : AdListener() {
-                override fun onAdFailedToLoad(adError: LoadAdError) {
-                    // Handle the failure.
-                }
-            })
-            .withNativeAdOptions(NativeAdOptions.Builder().build())
-            .build()
-
-        adLoader.loadAd(AdRequest.Builder().build())
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(updateReceiver)
-        nativeAd?.destroy()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -173,7 +143,7 @@ class MainActivity : ComponentActivity() {
         var selectedCurrency by remember { mutableStateOf(getSelectedCurrency(sharedPreferences)) }
 
         var showSplashScreen by remember { mutableStateOf(false) }
-        var showSettingsMenu by remember { mutableStateOf(sharedPreferences.getBoolean("first_launch", true)) }
+        var showSettingsMenu by remember { mutableStateOf(sharedPreferences.getBoolean("first_launch", true)) } // Show settings menu only on first launch
 
         LaunchedEffect(Unit) {
             refreshUI()
@@ -186,153 +156,89 @@ class MainActivity : ComponentActivity() {
                 showSplashScreen = false
             })
         } else {
-            Box {
-                // Додайте контейнер для нативної реклами зверху
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .background(Color.White)
-                        .zIndex(1f) // Встановіть високий zIndex для відображення поверх основного контенту
-                ) {
-                    NativeAdContainer(nativeAd = nativeAd)
-                }
-
-                // Основний контент додатка
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(0f) // Встановіть нижчий zIndex для основного контенту
-                ) {
-                    MainScreen(
-                        onNavigateToMainActivity = {
-                            val intent = Intent(context, MainActivity::class.java).apply {
-                                putExtra("SHOW_SPLASH_SCREEN", false)
-                            }
-                            context.startActivity(intent)
-                        },
-                        onNavigateToIncomes = {
-                            val intent = Intent(context, IncomeActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToExpenses = {
-                            val intent = Intent(context, ExpenseActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToIssuedOnLoan = {
-                            val intent = Intent(context, IssuedOnLoanActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToBorrowed = {
-                            val intent = Intent(context, BorrowedActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToAllTransactionIncome = {
-                            val intent = Intent(context, AllTransactionIncomeActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToAllTransactionExpense = {
-                            val intent = Intent(context, AllTransactionExpenseActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToBudgetPlanning = {
-                            val intent = Intent(context, BudgetPlanningActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        onNavigateToTaskActivity = {
-                            val intent = Intent(context, TaskActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        viewModel = viewModel(),
-                        onIncomeCategoryClick = { category ->
-                            val intent = Intent(context, IncomeTransactionActivity::class.java).apply {
-                                putExtra("categoryName", category)
-                            }
-                            context.startActivity(intent)
-                        },
-                        onExpenseCategoryClick = { category ->
-                            val intent = Intent(context, ExpenseTransactionActivity::class.java).apply {
-                                putExtra("categoryName", category)
-                            }
-                            context.startActivity(intent)
-                        },
-                        selectedCurrency = selectedCurrency,
-                        onCurrencySelected = { currency ->
-                            selectedCurrency = currency
-                        },
-                        onSaveSettings = {
-                            saveSettings(sharedPreferences, selectedCurrency)
-                            refreshUI()
-                            sharedPreferences.edit().putBoolean("first_launch", false).apply()
-                            showSettingsMenu = false
-                        },
-                        updateLocale = ::updateLocale,
-                        currency = selectedCurrency,
-                        refreshUI = ::refreshUI,
-                        appTitle = appTitle,
-                        showSettingsMenu = showSettingsMenu,
-                        selectedLanguage = Locale.getDefault().language,
-                        onLanguageSelected = { language ->
-                            // Language selection logic here
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun NativeAdContainer(nativeAd: NativeAd?, modifier: Modifier = Modifier) {
-        nativeAd?.let { ad ->
-            AndroidView(
-                factory = { context ->
-                    NativeAdView(context).apply {
-                        headlineView = TextView(context).apply {
-                            id = R.id.ad_headline
-                            textSize = 20f
-                            setTextColor(android.graphics.Color.BLACK) // Використовуйте android.graphics.Color.BLACK
-                        }
-                        bodyView = TextView(context).apply {
-                            id = R.id.ad_body
-                            textSize = 16f
-                            setTextColor(android.graphics.Color.BLACK) // Використовуйте android.graphics.Color.BLACK
-                        }
-                        callToActionView = Button(context).apply {
-                            id = R.id.ad_call_to_action
-                        }
-                        iconView = ImageView(context).apply {
-                            id = R.id.ad_app_icon
-                        }
-                        mediaView = MediaView(context).apply {
-                            id = R.id.ad_media
-                        }
-
-                        addView(headlineView)
-                        addView(bodyView)
-                        addView(callToActionView)
-                        addView(iconView)
-                        addView(mediaView)
-
-                        populateNativeAdView(ad, this)
+            MainScreen(
+                onNavigateToMainActivity = {
+                    val intent = Intent(context, MainActivity::class.java).apply {
+                        putExtra("SHOW_SPLASH_SCREEN", false)
                     }
+                    context.startActivity(intent)
                 },
-                modifier = modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-                    .background(Color.White)
+                onNavigateToIncomes = {
+                    val intent = Intent(context, IncomeActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToExpenses = {
+                    val intent = Intent(context, ExpenseActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToIssuedOnLoan = {
+                    val intent = Intent(context, IssuedOnLoanActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToBorrowed = {
+                    val intent = Intent(context, BorrowedActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToAllTransactionIncome = {
+                    val intent = Intent(context, AllTransactionIncomeActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToAllTransactionExpense = {
+                    val intent = Intent(context, AllTransactionExpenseActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToBudgetPlanning = {
+                    val intent = Intent(context, BudgetPlanningActivity::class.java)
+                    context.startActivity(intent)
+                },
+                onNavigateToTaskActivity = {
+                    val intent = Intent(context, TaskActivity::class.java)
+                    context.startActivity(intent)
+                },
+                viewModel = viewModel(),
+                onIncomeCategoryClick = { category ->
+                    val intent = Intent(context, IncomeTransactionActivity::class.java).apply {
+                        putExtra("categoryName", category)
+                    }
+                    context.startActivity(intent)
+                },
+                onExpenseCategoryClick = { category ->
+                    val intent = Intent(context, ExpenseTransactionActivity::class.java).apply {
+                        putExtra("categoryName", category)
+                    }
+                    context.startActivity(intent)
+                },
+                selectedCurrency = selectedCurrency,
+                onCurrencySelected = { currency ->
+                    selectedCurrency = currency
+                },
+                onSaveSettings = {
+                    saveSettings(sharedPreferences, selectedCurrency)
+                    refreshUI()
+                    sharedPreferences.edit().putBoolean("first_launch", false).apply() // Update first launch status
+                    showSettingsMenu = false // Close SettingsMenu after saving settings
+                },
+                updateLocale = ::updateLocale,
+                currency = selectedCurrency,
+                refreshUI = ::refreshUI,
+                appTitle = appTitle,
+                showSettingsMenu = showSettingsMenu, // Ensure this parameter is passed
+                selectedLanguage = Locale.getDefault().language,
+                onLanguageSelected = { language ->
+                    // Language selection logic here
+                }
             )
         }
     }
-
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateUI() {
+        // Викликайте цю функцію для оновлення всіх необхідних елементів UI після зміни мови
         setContent {
             HomeAccountingAppTheme {
                 MainContent()
             }
         }
     }
-
     @RequiresApi(Build.VERSION_CODES.O)
     private fun refreshUI() {
         viewModel.refreshExpenses()
@@ -344,11 +250,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
     private fun getSelectedCurrency(sharedPreferences: SharedPreferences): String {
         return sharedPreferences.getString("currency", "UAH") ?: "UAH"
     }
 
+    // Ensure the locale update does not disrupt data storage
     private fun updateLocale(context: Context, language: String) {
         val locale = Locale(language)
         Locale.setDefault(locale)
@@ -356,6 +262,7 @@ class MainActivity : ComponentActivity() {
         val config = resources.configuration
         config.setLocale(locale)
         resources.updateConfiguration(config, resources.displayMetrics)
+        // Refresh UI without affecting stored data
     }
 
     private fun saveSettings(sharedPreferences: SharedPreferences, currency: String) {
@@ -363,15 +270,16 @@ class MainActivity : ComponentActivity() {
             putString("currency", currency)
             apply()
         }
+        // Notify all activities about the locale update
         sendLocaleUpdateBroadcast(this@MainActivity, Locale.getDefault().language)
     }
-
     private fun sendLocaleUpdateBroadcast(context: Context, language: String) {
         val intent = Intent("com.example.homeaccountingapp.UPDATE_LOCALE")
         intent.putExtra("language", language)
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
     }
 
+    // Existing function
     private fun updateCategories() {
         val sharedPreferencesExpense = getSharedPreferences("ExpensePrefs", Context.MODE_PRIVATE)
         val sharedPreferencesIncome = getSharedPreferences("IncomePrefs", Context.MODE_PRIVATE)
@@ -387,7 +295,7 @@ class MainActivity : ComponentActivity() {
 
         viewModel.refreshCategories()
     }
-
+    // New helper function to load existing categories
     private fun loadExistingCategories(sharedPreferences: SharedPreferences): List<String> {
         val categoriesJson = sharedPreferences.getString("categories", null)
         return if (categoriesJson != null) {
@@ -404,6 +312,7 @@ class MainActivity : ComponentActivity() {
         editor.apply()
     }
 
+    // Existing function
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateCategoriesIfNeeded() {
         val sharedPreferencesExpense = getSharedPreferences("ExpensePrefs", Context.MODE_PRIVATE)
@@ -429,28 +338,6 @@ class MainActivity : ComponentActivity() {
         }
 
         viewModel.refreshCategories()
-    }
-
-    private fun populateNativeAdView(nativeAd: NativeAd, adView: NativeAdView) {
-        adView.headlineView = adView.findViewById<TextView>(R.id.ad_headline).apply {
-            text = nativeAd.headline
-        }
-        adView.mediaView = adView.findViewById(R.id.ad_media) as MediaView
-        adView.bodyView = adView.findViewById<TextView>(R.id.ad_body).apply {
-            text = nativeAd.body
-        }
-        adView.callToActionView = adView.findViewById<Button>(R.id.ad_call_to_action).apply {
-            text = nativeAd.callToAction
-        }
-        adView.iconView = adView.findViewById<ImageView>(R.id.ad_app_icon).apply {
-            nativeAd.icon?.let {
-                setImageDrawable(it.drawable)
-                visibility = View.VISIBLE
-            } ?: run {
-                visibility = View.GONE
-            }
-        }
-        adView.setNativeAd(nativeAd)
     }
 }
 // Функція Splash Screen
