@@ -309,9 +309,10 @@ class TaskViewModel(
         }
     }
 
-
+    @RequiresApi(Build.VERSION_CODES.S)
     fun removeTask(task: Task) {
         _tasks.remove(task)
+        cancelTaskReminders(task) // Скасувати нагадування під час видалення задачі
         saveTasks()
     }
 
@@ -322,6 +323,11 @@ class TaskViewModel(
             val updatedTask = task.copy(isCompleted = !task.isCompleted)
             _tasks[index] = updatedTask
             saveTasks()
+            if (updatedTask.isCompleted) {
+                cancelTaskReminders(updatedTask) // Скасувати нагадування, якщо задача завершена
+            } else {
+                scheduleTaskReminders(updatedTask) // Перепланувати нагадування, якщо задача відновлена
+            }
         }
     }
 
@@ -362,6 +368,7 @@ class TaskViewModel(
         val startReminderRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(task.startDate.time - System.currentTimeMillis(), TimeUnit.MILLISECONDS)
             .setInputData(startReminderData)
+            .addTag(task.id) // Додаємо тег задачі
             .build()
 
         workManager.enqueue(startReminderRequest)
@@ -387,12 +394,38 @@ class TaskViewModel(
                     val advanceReminderRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
                         .setInitialDelay(it - System.currentTimeMillis(), TimeUnit.MILLISECONDS)
                         .setInputData(advanceReminderData)
+                        .addTag(task.id) // Додаємо тег задачі
                         .build()
 
                     workManager.enqueue(advanceReminderRequest)
                 }
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun cancelTaskReminders(task: Task) {
+        val workManager = WorkManager.getInstance(context)
+        workManager.cancelAllWorkByTag(task.id) // Скасувати всі роботи з тегом задачі
+
+        // Скасувати всі існуючі нагадування через AlarmManager
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val startIntent = Intent(context, ReminderBroadcastReceiver::class.java).apply {
+            putExtra("TASK_TITLE", task.title)
+            putExtra("TASK_ID", task.id)
+            putExtra("ACTION", "START")
+        }
+        val startPendingIntent = PendingIntent.getBroadcast(context, task.id.hashCode(), startIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        alarmManager.cancel(startPendingIntent)
+
+        val reminderIntent = Intent(context, ReminderBroadcastReceiver::class.java).apply {
+            putExtra("TASK_TITLE", task.title)
+            putExtra("TASK_ID", task.id)
+            putExtra("ACTION", "REMINDER")
+        }
+        val reminderPendingIntent = PendingIntent.getBroadcast(context, task.id.hashCode(), reminderIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        alarmManager.cancel(reminderPendingIntent)
     }
 }
 class TaskViewModelFactory(
